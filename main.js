@@ -111,7 +111,7 @@ createApp({
         flatpickr("#fechaNacimiento", {
             dateFormat: "Y-m-d",
             maxDate: new Date(),
-            locale: "es"
+            locale: flatpickr.l10ns.es
         });
     }
 }).mount("#app");
