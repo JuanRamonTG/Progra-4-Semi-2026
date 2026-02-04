@@ -7,8 +7,12 @@ createApp({
                 codigo:"",
                 nombre:"",
                 direccion:"",
-                email:"",
-                telefono:""
+                municipio:"",
+                departamento:"",
+                telefono:"",
+                fechaNacimiento:"",
+                sexo:"",
+                email:""
             },
             accion:'nuevo',
             id:0,
@@ -44,8 +48,12 @@ createApp({
             this.alumno.codigo = alumno.codigo;
             this.alumno.nombre = alumno.nombre;
             this.alumno.direccion = alumno.direccion;
-            this.alumno.email = alumno.email;
+            this.alumno.municipio = alumno.municipio;
+            this.alumno.departamento = alumno.departamento;
             this.alumno.telefono = alumno.telefono;
+            this.alumno.fechaNacimiento = alumno.fechaNacimiento;
+            this.alumno.sexo = alumno.sexo;
+            this.alumno.email = alumno.email;
         },
         guardarAlumno() {
             let datos = {
@@ -53,8 +61,12 @@ createApp({
                 codigo: this.alumno.codigo,
                 nombre: this.alumno.nombre,
                 direccion: this.alumno.direccion,
-                email: this.alumno.email,
-                telefono: this.alumno.telefono
+                municipio: this.alumno.municipio,
+                departamento: this.alumno.departamento,
+                telefono: this.alumno.telefono,
+                fechaNacimiento: this.alumno.fechaNacimiento,
+                sexo: this.alumno.sexo,
+                email: this.alumno.email
             }, codigoDuplicado = this.buscarAlumno(datos.codigo);
             if(codigoDuplicado && this.accion=='nuevo'){
                 alert("El codigo del alumno ya existe, "+ codigoDuplicado.nombre);
@@ -73,8 +85,12 @@ createApp({
             this.alumno.codigo = '';
             this.alumno.nombre = '';
             this.alumno.direccion = '';
-            this.alumno.email = '';
+            this.alumno.municipio = '';
+            this.alumno.departamento = '';
             this.alumno.telefono = '';
+            this.alumno.fechaNacimiento = '';
+            this.alumno.sexo = '';
+            this.alumno.email = '';
         },
         buscarAlumno(codigo=''){
             let n = localStorage.length;
@@ -90,5 +106,12 @@ createApp({
     },
     mounted(){
         this.obtenerAlumnos();
+        
+        // Inicializar flatpickr para el campo de fecha
+        flatpickr("#fechaNacimiento", {
+            dateFormat: "Y-m-d",
+            maxDate: new Date(),
+            locale: "es"
+        });
     }
 }).mount("#app");
