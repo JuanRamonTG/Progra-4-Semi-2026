@@ -26,6 +26,7 @@ const alumnos = {
 
         buscarAlumno(){
             this.forms.busqueda_alumnos.mostrar = true;
+            this.$emit('buscar');
         },
         modificarAlumno(alumno){
             this.accion = 'modificar';
@@ -122,7 +123,7 @@ const alumnos = {
                                 <div class="col text-center">
                                     <button type="submit" id="btnGuardarAlumno" class="btn btn-primary">GUARDAR</button>
                                     <button type="reset" id="btnCancelarAlumno" class="btn btn-warning">NUEVO</button>
-                                    <button type="buscar" id="btnBuscarAlumno" class="btn btn-info">BUSCAR</button>
+                                    <button type="button" @click="buscarAlumno" id="btnBuscarAlumno" class="btn btn-info">BUSCAR</button>
                                 </div>
                             </div>
                         </div>
