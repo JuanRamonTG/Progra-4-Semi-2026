@@ -6,6 +6,9 @@ const busqueda_alumnos = {
         }
     },
     methods:{
+        modificarAlumno(alumno){
+            this.$emit('modificar', alumno);
+        },
         async obtenerAlumnos(){
             this.alumnos = await db.alumnos.filter(
                 alumno => alumno.codigo.toLowerCase().includes(this.buscar.toLowerCase()) 
