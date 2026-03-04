@@ -1,39 +1,64 @@
-
 const { createApp } = Vue,
     Dexie = window.Dexie,
-    db = new Dexie("db_academica");
+    db = new Dexie("db_usis054021"),
+    sha256 = CryptoJS.SHA256;
 
+// Inicializar la BD ANTES de crear la app
+db.version(4).stores({
+    "autores": "idAutor, codigo, nombre, pais, telefono",
+    "libros": "idLibro, titulo, idAutor, isbn, editorial, edicion"
+});
 
-createApp({
-    components:{
-        alumnos,
-        busqueda_alumnos
+const app = createApp({
+    components: {
+        autores,
+        busqueda_autores,
+        libros,
+        busqueda_libros
     },
-    data(){
-        return{
-            forms:{
-                alumnos:{mostrar:false},
-                busqueda_alumnos:{mostrar:false},
-                materias:{mostrar:false},
-                busqueda_materias:{mostrar:false},
-                docentes:{mostrar:false},
-                busqueda_docentes:{mostrar:false},
-                matriculas:{mostrar:false},
-                inscripciones:{mostrar:false}
+    data() {
+        return {
+            forms: {
+                autores: { mostrar: true },
+                busqueda_autores: { mostrar: false },
+                libros: { mostrar: false },
+                busqueda_libros: { mostrar: false }
             }
         }
     },
-    methods:{
-        buscar(ventana, metodo){
+    methods: {
+        buscar(ventana, metodo) {
             this.$refs[ventana][metodo]();
         },
-        abrirVentana(ventana){
+        abrirVentana(ventana) {
             this.forms[ventana].mostrar = !this.forms[ventana].mostrar;
+        },
+        modificar(ventana, metodo, data) {
+            this.$refs[ventana][metodo](data);
+        },
+        recargarAutoresEnLibros() {
+            if (this.$refs.libros && this.$refs.libros.cargarAutores) {
+                this.$refs.libros.cargarAutores();
+            }
+        },
+        guardarAutor() {
+            this.buscar("busqueda_autores", "obtenerAutores");
+            this.recargarAutoresEnLibros();
         }
-    },
-    mounted(){
-        db.version(1).stores({
-            "alumnos": "idAlumno, codigo, nombre, direccion, email, telefono"
-        });
     }
-}).mount("#app");
+});
+
+// Registro GLOBAL del componente v-select (defensivo para v4 beta o v3)
+const vSelectComponent = window.vSelect ||
+    window.VueSelect?.default ||
+    window.VueSelect ||
+    window["vue-select"]?.default ||
+    window["vue-select"];
+
+if (vSelectComponent) {
+    app.component('v-select', vSelectComponent);
+} else {
+    console.warn("v-select no se pudo cargar. Verifique la conexión al CDN.");
+}
+
+app.mount("#app");
