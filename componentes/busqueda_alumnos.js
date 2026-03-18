@@ -14,13 +14,30 @@ const busqueda_alumnos = {
                 alumno => alumno.codigo.toLowerCase().includes(this.buscar.toLowerCase()) 
                     || alumno.nombre.toLowerCase().includes(this.buscar.toLowerCase())
             ).toArray();
-        },
-        async eliminarAlumno(idAlumno, e){
-            e.stopPropagation();
-            if(confirm("¿Está seguro de eliminar el alumno?")){
-                await db.alumnos.delete(idAlumno);
-                this.obtenerAlumnos();
+            if( this.alumnos.length<1 && this.buscar.length<=0){
+                fetch(`private/modulos/alumnos/alumno.php?accion=consultar`)
+                    .then(response=>response.json())
+                    .then(data=>{
+                        this.alumnos = data;
+                        db.alumnos.bulkAdd(data);
+                    });
             }
+        },
+        
+        async eliminarAlumno(alumno, e){
+            e.stopPropagation();
+            alertify.confirm('Elimanar alumnos', `¿Está seguro de eliminar el alumno ${alumno.nombre}?`, async e=>{
+                await db.alumnos.delete(alumno.idAlumno);
+                fetch(`private/modulos/alumnos/alumno.php?accion=eliminar&alumnos=${JSON.stringify(alumno)}`)
+                    .then(response=>response.json())
+                    .then(data=>{
+                        if(data!=true) alertify.error(`Error al sincronizar con el servidor: ${data}`);
+                    });
+                this.obtenerAlumnos();
+                alertify.success(`Alumno ${alumno.nombre} eliminado correctamente`);
+            }, () => {
+                //No hacer nada
+            });
         },
     },
     template: `
@@ -39,6 +56,7 @@ const busqueda_alumnos = {
                             <th>DIRECCION</th>
                             <th>EMAIL</th>
                             <th>TELEFONO</th>
+                            <th>HASH</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -49,8 +67,9 @@ const busqueda_alumnos = {
                             <td>{{ alumno.direccion }}</td>
                             <td>{{ alumno.email }}</td>
                             <td>{{ alumno.telefono }}</td>
+                            <td>{{ alumno.hash }}</td>
                             <td>
-                                <button class="btn btn-danger" @click="eliminarAlumno(alumno.idAlumno, $event)">DEL</button>
+                                <button class="btn btn-danger" @click="eliminarAlumno(alumno, $event)">DEL</button>
                             </td>
                         </tr>
                     </tbody>

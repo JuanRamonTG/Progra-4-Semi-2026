@@ -1,8 +1,7 @@
 const alumnos = {
-    props: ['forms'],
+    props:['forms'],
     data(){
         return{
-            buscar: '',
             alumno:{
                 idAlumno:0,
                 codigo:"",
@@ -13,19 +12,12 @@ const alumnos = {
             },
             accion:'nuevo',
             idAlumno:0,
-            data:{ alumnos: [] }
+            data_alumnos:[]
         }
     },
     methods:{
-        async obtenerAlumnos(){
-            this.data.alumnos = await db.alumnos.filter(
-                alumno => alumno.codigo.toLowerCase().includes(this.buscar.toLowerCase()) 
-                    || alumno.nombre.toLowerCase().includes(this.buscar.toLowerCase())
-            ).toArray();
-        },
-
         buscarAlumno(){
-            this.forms.busqueda_alumnos.mostrar = true;
+            this.forms.busqueda_alumnos.mostrar = !this.forms.busqueda_alumnos.mostrar;
             this.$emit('buscar');
         },
         modificarAlumno(alumno){
@@ -46,16 +38,23 @@ const alumnos = {
                 email: this.alumno.email,
                 telefono: this.alumno.telefono
             };
+            datos.hash = sha256(JSON.stringify(datos));
             this.buscar = datos.codigo;
-            await this.obtenerAlumnos();
+            //await this.obtenerAlumnos();
 
-            if(this.data.alumnos.length > 0 && this.accion=='nuevo'){
-                alert("El codigo del alumno ya existe, "+ this.data.alumnos[0].nombre);
+            if(this.data_alumnos.length > 0 && this.accion=='nuevo'){
+                alertify.error(`El codigo del alumno ya existe, ${this.data_alumnos[0].nombre}`);
                 return; //Termina la ejecucion de la funcion
             }
             db.alumnos.put(datos);
+            fetch(`private/modulos/alumnos/alumno.php?accion=${this.accion}&alumnos=${JSON.stringify(datos)}`)
+                .then(response=>response.json())
+                .then(data=>{
+                    if(data!=true) alertify.error(`Error al sincronizar con el servidor: ${data}`);
+                });
             this.limpiarFormulario();
-            this.obtenerAlumnos();
+            alertify.success(`${datos.nombre} guardado correctamente`);
+            //this.obtenerAlumnos();
         },
         getId(){
             return new Date().getTime();
@@ -123,7 +122,7 @@ const alumnos = {
                                 <div class="col text-center">
                                     <button type="submit" id="btnGuardarAlumno" class="btn btn-primary">GUARDAR</button>
                                     <button type="reset" id="btnCancelarAlumno" class="btn btn-warning">NUEVO</button>
-                                    <button type="button" @click="buscarAlumno" id="btnBuscarAlumno" class="btn btn-info">BUSCAR</button>
+                                    <button type="button" @click="buscarAlumno" id="btnBuscarAlumno" class="btn btn-success">BUSCAR</button>
                                 </div>
                             </div>
                         </div>
