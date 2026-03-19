@@ -38,6 +38,59 @@ CREATE TABLE `alumnos` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 --
+-- Table structure for table `materias`
+--
+
+CREATE TABLE `materias` (
+  `id` int(10) NOT NULL,
+  `idMateria` char(36) NOT NULL,
+  `codigo` char(10) NOT NULL,
+  `nombre` char(100) NOT NULL,
+  `uv` char(10) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+
+--
+-- Table structure for table `matriculas`
+--
+
+CREATE TABLE `matriculas` (
+  `id` int(10) NOT NULL,
+  `idMatricula` char(36) NOT NULL,
+  `codigo` char(10) NOT NULL,
+  `fecha` date NOT NULL,
+  `idAlumno` char(36) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+
+--
+-- Table structure for table `docentes`
+--
+
+CREATE TABLE `docentes` (
+  `id` int(10) NOT NULL,
+  `idDocente` char(36) NOT NULL,
+  `codigo` char(10) NOT NULL,
+  `nombre` char(100) NOT NULL,
+  `direccion` char(150) NOT NULL,
+  `email` char(150) NOT NULL,
+  `telefono` char(9) NOT NULL,
+  `escalafon` char(50) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+
+--
+-- Table structure for table `inscripciones`
+--
+
+CREATE TABLE `inscripciones` (
+  `id` int(10) NOT NULL,
+  `idInscripcion` char(36) NOT NULL,
+  `idMatricula` char(36) NOT NULL,
+  `idAlumno` char(36) NOT NULL,
+  `idMateria` char(36) NOT NULL,
+  `ciclo` char(10) NOT NULL,
+  `fecha` date NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+
+--
 -- Indexes for dumped tables
 --
 
@@ -56,6 +109,58 @@ ALTER TABLE `alumnos`
 -- AUTO_INCREMENT for table `alumnos`
 --
 ALTER TABLE `alumnos`
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT;
+
+--
+-- Indexes for table `materias`
+--
+ALTER TABLE `materias`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idMateria` (`idMateria`);
+
+--
+-- Indexes for table `matriculas`
+--
+ALTER TABLE `matriculas`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idMatricula` (`idMatricula`);
+
+--
+-- Indexes for table `docentes`
+--
+ALTER TABLE `docentes`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idDocente` (`idDocente`);
+
+--
+-- Indexes for table `inscripciones`
+--
+ALTER TABLE `inscripciones`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idInscripcion` (`idInscripcion`);
+
+--
+-- AUTO_INCREMENT for table `materias`
+--
+ALTER TABLE `materias`
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `matriculas`
+--
+ALTER TABLE `matriculas`
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `docentes`
+--
+ALTER TABLE `docentes`
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `inscripciones`
+--
+ALTER TABLE `inscripciones`
   MODIFY `id` int(10) NOT NULL AUTO_INCREMENT;
 COMMIT;
 

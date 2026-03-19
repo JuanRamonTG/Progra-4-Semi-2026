@@ -38,15 +38,22 @@ const alumnos = {
                 email: this.alumno.email,
                 telefono: this.alumno.telefono
             };
-            datos.hash = sha256(JSON.stringify(datos));
-            this.buscar = datos.codigo;
+            datos.hash = sha256(JSON.stringify(datos)).toString();
             //await this.obtenerAlumnos();
 
             if(this.data_alumnos.length > 0 && this.accion=='nuevo'){
                 alertify.error(`El codigo del alumno ya existe, ${this.data_alumnos[0].nombre}`);
                 return; //Termina la ejecucion de la funcion
             }
-            db.alumnos.put(datos);
+            try {
+                await db.alumnos.put(datos);
+                // Recargar la grilla para que se vea el cambio inmediatamente.
+                this.$emit('buscar');
+            } catch (e) {
+                console.error('Error guardando alumno en SQLite (OPFS):', e);
+                alertify.error(`Error al guardar alumno en la base local: ${e?.message || e}`);
+                return;
+            }
             fetch(`private/modulos/alumnos/alumno.php?accion=${this.accion}&alumnos=${JSON.stringify(datos)}`)
                 .then(response=>response.json())
                 .then(data=>{

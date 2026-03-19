@@ -17,9 +17,9 @@ const busqueda_materias = {
             if( this.materias.length<1 && this.buscar.length<=0){
                 fetch(`private/modulos/materias/materia.php?accion=consultar`)
                     .then(response=>response.json())
-                    .then(data=>{
+                    .then(async data=>{
                         this.materias = data;
-                        db.materias.bulkAdd(data);
+                        await db.materias.bulkAdd(data);
                     });
             }
         },

@@ -17,9 +17,9 @@ const busqueda_alumnos = {
             if( this.alumnos.length<1 && this.buscar.length<=0){
                 fetch(`private/modulos/alumnos/alumno.php?accion=consultar`)
                     .then(response=>response.json())
-                    .then(data=>{
+                    .then(async data=>{
                         this.alumnos = data;
-                        db.alumnos.bulkAdd(data);
+                        await db.alumnos.bulkAdd(data);
                     });
             }
         },

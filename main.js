@@ -1,8 +1,5 @@
 const { createApp } = Vue,
-    Dexie = window.Dexie,
-    db = new Dexie("db_academica"),
     sha256 = CryptoJS.SHA256;
-
 
 createApp({
     components:{
@@ -11,7 +8,11 @@ createApp({
         materias,
         busqueda_materias,
         docentes,
-        busqueda_docentes
+        busqueda_docentes,
+        matriculas,
+        busqueda_matriculas,
+        inscripciones,
+        busqueda_inscripciones
     },
     data(){
         return{
@@ -23,7 +24,9 @@ createApp({
                 docentes:{mostrar:false},
                 busqueda_docentes:{mostrar:false},
                 matriculas:{mostrar:false},
-                inscripciones:{mostrar:false}
+                busqueda_matriculas:{mostrar:false},
+                inscripciones:{mostrar:false},
+                busqueda_inscripciones:{mostrar:false}
             }
         }
     },
@@ -38,11 +41,5 @@ createApp({
             this.$refs[ventana][metodo](data);
         }
     },
-    mounted(){
-        db.version(1).stores({
-            "alumnos": "idAlumno, codigo, nombre, direccion, email, telefono",
-            "materias": "idMateria, codigo, nombre, uv",
-            "docentes": "idDocente, codigo, nombre, direccion, email, telefono, escalafon"
-        });
-    }
+        // db schema is now handled by db.js SQLite wrapper
 }).mount("#app");

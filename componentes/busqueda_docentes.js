@@ -17,9 +17,9 @@ const busqueda_docentes = {
             if( this.docentes.length<1 && this.buscar.length<=0){
                 fetch(`private/modulos/docentes/docente.php?accion=consultar`)
                     .then(response=>response.json())
-                    .then(data=>{
+                    .then(async data=>{
                         this.docentes = data;
-                        db.docentes.bulkAdd(data);
+                        await db.docentes.bulkAdd(data);
                     });
             }
         },

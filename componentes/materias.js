@@ -39,7 +39,13 @@ const materias = {
                 alertify.error(`El codigo del materia ya existe, ${this.data_materias[0].nombre}`);
                 return; //Termina la ejecucion de la funcion
             }
-            db.materias.put(datos);
+            try {
+                await db.materias.put(datos);
+            } catch (e) {
+                console.error('Error guardando materia en SQLite (OPFS):', e);
+                alertify.error(`Error al guardar materia en la base local: ${e?.message || e}`);
+                return;
+            }
             this.limpiarFormulario();
             //this.obtenerMaterias();
             alertify.success(`Materia ${datos.nombre} guardada correctamente`);

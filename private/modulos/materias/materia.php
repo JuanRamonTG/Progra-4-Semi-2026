@@ -30,14 +30,8 @@ class materias{
         if(empty($this->datos['nombre'])){
             $this->respuesta['msg'] = 'El nombre es requerido';
         }
-        if(empty($this->datos['direccion'])){
-            $this->respuesta['msg'] = 'La direccion es requerida';
-        }
-        if(empty($this->datos['email'])){
-            $this->respuesta['msg'] = 'El email es requerido';
-        }
-        if(empty($this->datos['telefono'])){
-            $this->respuesta['msg'] = 'El telefono es requerido';
+        if(empty($this->datos['uv'])){
+            $this->respuesta['msg'] = 'La cantidad de UV es requerida';
         }
         return $this->administrar_materias();
     }
