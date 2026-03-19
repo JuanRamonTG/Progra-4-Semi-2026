@@ -115,7 +115,11 @@ const matriculas = {
             }
             
             // Sincronizar con el servidor con manejo de errores mejorado
-            fetch(`private/modulos/matriculas/matricula.php?accion=${this.accion}&matriculas=${encodeURIComponent(JSON.stringify(datos))}`)
+            fetch(`private/modulos/matriculas/matricula.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accion: this.accion, matriculas: datos })
+            })
                 .then(response=>response.json())
                 .then(data=>{
                     if(data.msg === 'ok' || data === true) {

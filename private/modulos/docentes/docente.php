@@ -1,9 +1,18 @@
 <?php
 include('../../Config/Config.php');
-extract($_REQUEST);
 
-$docentes = $docentes ?? '[]';
-$accion = $accion ?? '';
+// Leer JSON del body si viene como application/json
+$input = file_get_contents('php://input');
+$json = json_decode($input, true);
+
+if ($json && is_array($json)) {
+    $docentes = isset($json['docentes']) ? json_encode($json['docentes']) : '[]';
+    $accion   = $json['accion'] ?? '';
+} else {
+    extract($_REQUEST);
+    $docentes = $docentes ?? '[]';
+    $accion   = $accion   ?? '';
+}
 
 $class_docentes = new docentes($conexion);
 echo json_encode($class_docentes->recibir_datos($docentes));
@@ -24,23 +33,29 @@ class docentes{
         }
     }
     private function validar_datos(){
-        if(empty($this->datos['codigo'])){
+        if(!isset($this->datos['codigo']) || trim($this->datos['codigo']) === ''){
             $this->respuesta['msg'] = 'El codigo es requerido';
+            return $this->respuesta;
         }
-        if(empty($this->datos['nombre'])){
+        if(!isset($this->datos['nombre']) || trim($this->datos['nombre']) === ''){
             $this->respuesta['msg'] = 'El nombre es requerido';
+            return $this->respuesta;
         }
-        if(empty($this->datos['direccion'])){
+        if(!isset($this->datos['direccion']) || trim($this->datos['direccion']) === ''){
             $this->respuesta['msg'] = 'La direccion es requerida';
+            return $this->respuesta;
         }
-        if(empty($this->datos['email'])){
+        if(!isset($this->datos['email']) || trim($this->datos['email']) === ''){
             $this->respuesta['msg'] = 'El email es requerido';
+            return $this->respuesta;
         }
-        if(empty($this->datos['telefono'])){
+        if(!isset($this->datos['telefono']) || trim($this->datos['telefono']) === ''){
             $this->respuesta['msg'] = 'El telefono es requerido';
+            return $this->respuesta;
         }
-        if(empty($this->datos['escalafon'])){
+        if(!isset($this->datos['escalafon']) || trim($this->datos['escalafon']) === ''){
             $this->respuesta['msg'] = 'El escalafon es requerido';
+            return $this->respuesta;
         }
         return $this->administrar_docentes();
     }
@@ -50,14 +65,12 @@ class docentes{
            return $this->respuesta;
         }
         if($accion==='nuevo'){
-            // Verificar si ya existe un docente con este idDocente
-            $existente = $this->db->consultaSQL('SELECT idDocente FROM docentes WHERE idDocente = ?', $this->datos['idDocente']);
+            $this->db->consultaSQL('SELECT idDocente FROM docentes WHERE idDocente = ?', $this->datos['idDocente']);
+            $existente = $this->db->obtener_datos();
             if(!empty($existente)){
-                // Si existe, actualizar en lugar de insertar
                 return $this->db->consultaSQL('UPDATE docentes SET codigo = ?, nombre = ?, direccion = ?, email = ?, telefono = ?, escalafon = ? WHERE idDocente = ?',
                     $this->datos['codigo'], $this->datos['nombre'], $this->datos['direccion'], $this->datos['email'], $this->datos['telefono'], $this->datos['escalafon'], $this->datos['idDocente']);
             }
-            // Si no existe, insertar normalmente
             return $this->db->consultaSQL('INSERT INTO docentes (idDocente, codigo, nombre, direccion, email, telefono, escalafon) VALUES (?, ?, ?, ?, ?, ?, ?)',
             $this->datos['idDocente'], $this->datos['codigo'], $this->datos['nombre'], $this->datos['direccion'], $this->datos['email'], $this->datos['telefono'], $this->datos['escalafon']);
         }else if($accion==='modificar'){

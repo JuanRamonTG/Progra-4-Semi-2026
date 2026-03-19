@@ -152,7 +152,11 @@ const inscripciones = {
                     try {
                         await db.matriculas.put(nuevaMatricula);
                         // Sincronizar matrícula con servidor.
-                        fetch(`private/modulos/matriculas/matricula.php?accion=nuevo&matriculas=${encodeURIComponent(JSON.stringify(nuevaMatricula))}`)
+                        fetch(`private/modulos/matriculas/matricula.php`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ accion: 'nuevo', matriculas: nuevaMatricula })
+                        })
                             .then(resp=>resp.json())
                             .then(data=>{
                                 if(data.msg === 'ok' || data === true) {
@@ -189,7 +193,11 @@ const inscripciones = {
             }
             
             // Sincronizar con el servidor con manejo de errores mejorado
-            fetch(`private/modulos/inscripciones/inscripcion.php?accion=${this.accion}&inscripciones=${encodeURIComponent(JSON.stringify(datos))}`)
+            fetch(`private/modulos/inscripciones/inscripcion.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accion: this.accion, inscripciones: datos })
+            })
                 .then(response=>response.json())
                 .then(data=>{
                     if(data.msg === 'ok' || data === true) {

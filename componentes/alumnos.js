@@ -56,7 +56,11 @@ const alumnos = {
             }
             
             // Sincronizar con el servidor con manejo de errores mejorado
-            fetch(`private/modulos/alumnos/alumno.php?accion=${this.accion}&alumnos=${JSON.stringify(datos)}`)
+            fetch(`private/modulos/alumnos/alumno.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accion: this.accion, alumnos: datos })
+            })
                 .then(response=>response.json())
                 .then(data=>{
                     if(data.msg === 'ok' || data === true) {

@@ -41,16 +41,20 @@ const materias = {
                 return;
             }
 
-            fetch(`private/modulos/materias/materia.php?accion=${this.accion}&materias=${encodeURIComponent(JSON.stringify(datos))}`)
+            fetch(`private/modulos/materias/materia.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accion: this.accion, materias: datos })
+            })
                 .then(response=>response.json())
                 .then(data=>{
-                    if(data.msg === 'ok' || data === true) {
+                    if(data === true || data.msg === 'ok') {
                         console.log('Materia sincronizada correctamente con el servidor');
-                    } else if(data.msg && data.msg.includes('Duplicate entry')) {
-                        console.warn('La materia ya existe en el servidor. Se mantiene la copia local.');
-                        alertify.warning(`La materia ya existe en el servidor. Se actualizará automáticamente.`);
                     } else {
-                        alertify.error(`Error al sincronizar con el servidor: ${data.msg || data}`);
+                        // data puede ser string (error SQL directo) o {msg: '...'}
+                        const errorMsg = (typeof data === 'string') ? data : (data.msg || JSON.stringify(data));
+                        console.error('Error servidor:', errorMsg);
+                        alertify.error(`Error al sincronizar: ${errorMsg}`);
                     }
                 })
                 .catch(err => {
