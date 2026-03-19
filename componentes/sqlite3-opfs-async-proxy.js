@@ -159,17 +159,42 @@ const installAsyncProxy = function(self){
      then each directory element leading to the file is created along
      the way. Throws if any creation or resolution fails.
   */
+  const isOpfsInvalidStateError = (e) => {
+    if(!e) return false;
+    const msg = (e.message || '').toString();
+    return e.name === 'InvalidStateError' ||
+      (e.name === 'DOMException' && msg.includes('state cached'));
+  };
+
+  const getRoot = async () => {
+    if(!state.rootDir){
+      state.rootDir = await navigator.storage.getDirectory();
+    }
+    return state.rootDir;
+  };
+
   const getDirForFilename = async function f(absFilename, createDirs = false){
     const path = getResolvedPath(absFilename, true);
     const filename = path.pop();
-    let dh = state.rootDir;
-    for(const dirName of path){
-      if(dirName){
-        dh = await dh.getDirectoryHandle(dirName, {create: !!createDirs});
+
+    for(let attempt = 1; attempt <= 2; attempt++){
+      try {
+        let dh = await getRoot();
+        for(const dirName of path){
+          if(dirName){
+            dh = await dh.getDirectoryHandle(dirName, {create: !!createDirs});
+          }
+        }
+        return [dh, filename];
+      }catch(e){
+        if(attempt === 2 || !isOpfsInvalidStateError(e)) throw e;
+        // Reset root handle and retry once.
+        state.rootDir = null;
+        warn('getDirForFilename: detected invalid OPFS state, resetting rootDir and retrying.', e);
       }
     }
-    return [dh, filename];
   };
+
 
   /**
      If the given file-holding object has a sync handle attached to it,
@@ -309,6 +334,13 @@ const installAsyncProxy = function(self){
           fh.syncHandle = await fh.fileHandle.createSyncAccessHandle();
           break;
         }catch(e){
+          if(isOpfsInvalidStateError(e) && fh.fileHandle && fh.dirHandle && fh.filenamePart){
+            // a transient OPFS state issue; try to refresh the file handle
+            try {
+              warn("getSyncHandle: invalid OPFS state; refreshing file handle and retrying.", e);
+              fh.fileHandle = await fh.dirHandle.getFileHandle(fh.filenamePart, {create: false});
+            }catch(_){ /* ignore */ }
+          }
           if(i === maxTries){
             throw new GetSyncHandleError(
               e, "Error getting sync handle for",opName+"().",maxTries,
@@ -552,17 +584,45 @@ const installAsyncProxy = function(self){
       const create = (state.sq3Codes.SQLITE_OPEN_CREATE & flags);
       wTimeStart('xOpen');
       try{
-        let hDir, filenamePart;
-        try {
-          [hDir, filenamePart] = await getDirForFilename(filename, !!create);
-        }catch(e){
-          state.s11n.storeException(1,e);
-          storeAndNotify(opName, state.sq3Codes.SQLITE_NOTFOUND);
-          mTimeEnd();
-          wTimeEnd();
-          return;
+        let hDir, filenamePart, hFile;
+        const maxOpenRetries = 3;
+        const retryDelayMs = 50;
+        const isTransientOpfsStateError = (e) => {
+          if(!e) return false;
+          const msg = (e.message || '').toString();
+          return e.name === 'InvalidStateError' ||
+            (e.name === 'DOMException' && msg.includes('state cached'));
+        };
+
+        // Resolve the directory and filename first. If this fails, treat it as "not found".
+        for(let attempt = 1; attempt <= maxOpenRetries; attempt++){
+          try {
+            [hDir, filenamePart] = await getDirForFilename(filename, !!create);
+            break;
+          }catch(e){
+            if(attempt === maxOpenRetries || !isTransientOpfsStateError(e)){
+              state.s11n.storeException(1,e);
+              storeAndNotify(opName, state.sq3Codes.SQLITE_NOTFOUND);
+              mTimeEnd();
+              wTimeEnd();
+              return;
+            }
+            warn(`xOpen(): transient OPFS state error while resolving path (attempt ${attempt} of ${maxOpenRetries}), retrying.`, e);
+            await new Promise((r)=>setTimeout(r, retryDelayMs));
+          }
         }
-        const hFile = await hDir.getFileHandle(filenamePart, {create});
+
+        // Get the actual file handle, retrying on transient OPFS state errors.
+        for(let attempt = 1; attempt <= maxOpenRetries; attempt++){
+          try {
+            hFile = await hDir.getFileHandle(filenamePart, {create});
+            break;
+          }catch(e){
+            if(attempt === maxOpenRetries || !isTransientOpfsStateError(e)) throw e;
+            warn(`xOpen(): transient OPFS state error while opening file (attempt ${attempt} of ${maxOpenRetries}), retrying.`, e);
+            await new Promise((r)=>setTimeout(r, retryDelayMs));
+          }
+        }
         wTimeEnd();
         const fh = Object.assign(Object.create(null),{
           fid: fid,

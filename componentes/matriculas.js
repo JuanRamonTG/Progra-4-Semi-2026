@@ -12,7 +12,7 @@ const matriculas = {
             idMatricula:0,
             data_matriculas:[],
             alumnos:[],
-            ciclos:[]
+            loadingAlumnos:false
         }
     },
     async mounted(){
@@ -21,27 +21,45 @@ const matriculas = {
     },
     methods:{
         async cargarAlumnos(){
-            this.alumnos = await db.alumnos.filter(() => true).toArray();
-            if(this.alumnos.length < 1){
-                const resp = await fetch(`private/modulos/alumnos/alumno.php?accion=consultar`);
-                const data = await resp.json();
-                this.alumnos = data;
-                await db.alumnos.bulkAdd(data);
+            this.loadingAlumnos = true;
+            try {
+                await db.waitForReady();
+                this.alumnos = await db.alumnos.filter(() => true).toArray();
+            } catch (e) {
+                console.error('Error leyendo alumnos de la DB local:', e);
+                this.alumnos = [];
             }
+            if(!this.alumnos.length){
+                try {
+                    const resp = await fetch(`private/modulos/alumnos/alumno.php?accion=consultar`);
+                    const data = await resp.json();
+                    this.alumnos = data || [];
+                    if(this.alumnos.length) await db.alumnos.bulkAdd(this.alumnos);
+                } catch (e) {
+                    console.error('Error cargando alumnos desde servidor:', e);
+                }
+            }
+            this.loadingAlumnos = false;
         },
         async cargarMatriculas(){
-            this.data_matriculas = await db.matriculas.filter(() => true).toArray();
-            if(this.data_matriculas.length < 1){
-                const resp = await fetch(`private/modulos/matriculas/matricula.php?accion=consultar`);
-                const data = await resp.json();
-                this.data_matriculas = data;
-                await db.matriculas.bulkAdd(data);
+            try {
+                await db.waitForReady();
+                this.data_matriculas = await db.matriculas.filter(() => true).toArray();
+            } catch (e) {
+                console.error('Error leyendo matriculas de la DB local:', e);
+                this.data_matriculas = [];
             }
-            this.refreshCiclos();
-        },
-        refreshCiclos(){
-            const unique = new Set(this.data_matriculas.map(m => m.codigo).filter(v => !!v));
-            this.ciclos = Array.from(unique).sort();
+            if(this.data_matriculas.length < 1){
+                try {
+                    const resp = await fetch(`private/modulos/matriculas/matricula.php?accion=consultar`);
+                    const data = await resp.json();
+                    this.data_matriculas = data || [];
+                    if(this.data_matriculas.length) await db.matriculas.bulkAdd(this.data_matriculas);
+                } catch (e) {
+                    console.error('Error cargando matriculas desde servidor:', e);
+                    this.data_matriculas = [];
+                }
+            }
         },
         buscarMatricula(){
             this.forms.busqueda_matriculas.mostrar = !this.forms.busqueda_matriculas.mostrar;
@@ -69,13 +87,14 @@ const matriculas = {
                 alertify.error(`Error al guardar matricula en la base local: ${e?.message || e}`);
                 return;
             }
-            fetch(`private/modulos/matriculas/matricula.php?accion=${this.accion}&matriculas=${JSON.stringify(datos)}`)
+            fetch(`private/modulos/matriculas/matricula.php?accion=${this.accion}&matriculas=${encodeURIComponent(JSON.stringify(datos))}`)
                 .then(response=>response.json())
                 .then(data=>{
                     if(data!=true) alertify.error(`Error al sincronizar con el servidor: ${data}`);
                 });
             await this.cargarMatriculas();
             this.limpiarFormulario();
+            this.$emit('buscar');
             alertify.success(`Matricula guardada correctamente`);
         },
         getId(){
@@ -102,7 +121,7 @@ const matriculas = {
                                 </div>
                                 <div class="col-9">
                                     <select required v-model="matricula.idAlumno" class="form-select">
-                                        <option value="">-- Buscar alumno --</option>
+                                        <option value="" disabled>{{ loadingAlumnos ? 'Cargando alumnos...' : (alumnos.length ? '-- Buscar alumno --' : 'No hay alumnos disponibles') }}</option>
                                         <option v-for="alumno in alumnos" :key="alumno.idAlumno" :value="alumno.idAlumno">
                                             {{ alumno.codigo }} - {{ alumno.nombre }}
                                         </option>
@@ -122,12 +141,7 @@ const matriculas = {
                                     CICLO ACADÉMICO:
                                 </div>
                                 <div class="col-6">
-                                    <select required v-model="matricula.codigo" class="form-select">
-                                        <option value="">-- Seleccione ciclo --</option>
-                                        <option v-for="ciclo in ciclos" :key="ciclo" :value="ciclo">
-                                            {{ ciclo }}
-                                        </option>
-                                    </select>
+                                    <input placeholder="Ej: 2026-1" required v-model="matricula.codigo" type="text" class="form-control">
                                 </div>
                             </div>
                         </div>
