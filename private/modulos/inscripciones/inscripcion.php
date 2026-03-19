@@ -47,6 +47,14 @@ class inscripciones{
            return $this->respuesta;
         }
         if($accion==='nuevo'){
+            // Verificar si ya existe una inscripción con este idInscripcion
+            $existente = $this->db->consultaSQL('SELECT idInscripcion FROM inscripciones WHERE idInscripcion = ?', $this->datos['idInscripcion']);
+            if(!empty($existente)){
+                // Si existe, actualizar en lugar de insertar
+                return $this->db->consultaSQL('UPDATE inscripciones SET idMatricula = ?, idMateria = ?, idAlumno = ?, ciclo = ?, fecha = ? WHERE idInscripcion = ?',
+                    $this->datos['idMatricula'], $this->datos['idMateria'], $this->datos['idAlumno'], $this->datos['ciclo'], $this->datos['fecha'], $this->datos['idInscripcion']);
+            }
+            // Si no existe, insertar normalmente
             return $this->db->consultaSQL('INSERT INTO inscripciones (idInscripcion, idMatricula, idMateria, idAlumno, ciclo, fecha) VALUES (?, ?, ?, ?, ?, ?)',
             $this->datos['idInscripcion'], $this->datos['idMatricula'], $this->datos['idMateria'], $this->datos['idAlumno'], $this->datos['ciclo'], $this->datos['fecha']);
         }else if($accion==='modificar'){

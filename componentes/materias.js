@@ -44,7 +44,18 @@ const materias = {
             fetch(`private/modulos/materias/materia.php?accion=${this.accion}&materias=${encodeURIComponent(JSON.stringify(datos))}`)
                 .then(response=>response.json())
                 .then(data=>{
-                    if(data!=true) alertify.error(`Error al sincronizar con el servidor: ${data}`);
+                    if(data.msg === 'ok' || data === true) {
+                        console.log('Materia sincronizada correctamente con el servidor');
+                    } else if(data.msg && data.msg.includes('Duplicate entry')) {
+                        console.warn('La materia ya existe en el servidor. Se mantiene la copia local.');
+                        alertify.warning(`La materia ya existe en el servidor. Se actualizará automáticamente.`);
+                    } else {
+                        alertify.error(`Error al sincronizar con el servidor: ${data.msg || data}`);
+                    }
+                })
+                .catch(err => {
+                    console.warn('Error de conectividad al sincronizar materia:', err);
+                    alertify.warning(`No se pudo sincronizar con el servidor. La materia se guardó localmente.`);
                 });
 
             this.limpiarFormulario();

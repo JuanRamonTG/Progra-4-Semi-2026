@@ -47,6 +47,14 @@ class alumnos{
            return $this->respuesta;
         }
         if($accion==='nuevo'){
+            // Verificar si ya existe un alumno con este idAlumno
+            $existente = $this->db->consultaSQL('SELECT idAlumno FROM alumnos WHERE idAlumno = ?', $this->datos['idAlumno']);
+            if(!empty($existente)){
+                // Si existe, actualizar en lugar de insertar
+                return $this->db->consultaSQL('UPDATE alumnos SET codigo = ?, nombre = ?, direccion = ?, email = ?, telefono = ? WHERE idAlumno = ?',
+                    $this->datos['codigo'], $this->datos['nombre'], $this->datos['direccion'], $this->datos['email'], $this->datos['telefono'], $this->datos['idAlumno']);
+            }
+            // Si no existe, insertar normalmente
             return $this->db->consultaSQL('INSERT INTO alumnos (idAlumno, codigo, nombre, direccion, email, telefono) VALUES (?, ?, ?, ?, ?, ?)',
             $this->datos['idAlumno'], $this->datos['codigo'], $this->datos['nombre'], $this->datos['direccion'], $this->datos['email'], $this->datos['telefono']);
         }else if($accion==='modificar'){

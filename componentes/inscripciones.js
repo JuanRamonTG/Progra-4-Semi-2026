@@ -25,13 +25,27 @@ const inscripciones = {
         await this.cargarMatriculas();
     },
     methods:{
+        async _retryWithBackoff(fn, maxRetries = 3) {
+            let lastError;
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    return await fn();
+                } catch (e) {
+                    lastError = e;
+                    const delay = Math.min(100 * Math.pow(2, attempt), 1000);
+                    console.warn(`Intento ${attempt + 1}/${maxRetries} falló, reintentando en ${delay}ms:`, e.message);
+                    await new Promise(r => setTimeout(r, delay));
+                }
+            }
+            throw lastError;
+        },
         async cargarAlumnos(){
             this.loadingAlumnos = true;
             try {
                 await db.waitForReady();
-                this.alumnos = await db.alumnos.filter(() => true).toArray();
+                this.alumnos = await this._retryWithBackoff(() => db.alumnos.filter(() => true).toArray(), 2);
             } catch (e) {
-                console.error('Error leyendo alumnos de la DB local:', e);
+                console.error('Error leyendo alumnos de la DB local después de reintentos:', e);
                 this.alumnos = [];
             }
             if(!this.alumnos.length){
@@ -39,7 +53,13 @@ const inscripciones = {
                     const resp = await fetch(`private/modulos/alumnos/alumno.php?accion=consultar`);
                     const data = await resp.json();
                     this.alumnos = data || [];
-                    if(this.alumnos.length) await db.alumnos.bulkAdd(this.alumnos);
+                    if(this.alumnos.length) {
+                        try {
+                            await this._retryWithBackoff(() => db.alumnos.bulkAdd(this.alumnos), 2);
+                        } catch (e) {
+                            console.warn('Error guardando alumnos en BD local:', e);
+                        }
+                    }
                 } catch (e) {
                     console.error('Error cargando alumnos desde servidor:', e);
                 }
@@ -50,9 +70,9 @@ const inscripciones = {
             this.loadingMaterias = true;
             try {
                 await db.waitForReady();
-                this.materias = await db.materias.filter(() => true).toArray();
+                this.materias = await this._retryWithBackoff(() => db.materias.filter(() => true).toArray(), 2);
             } catch (e) {
-                console.error('Error leyendo materias de la DB local:', e);
+                console.error('Error leyendo materias de la DB local después de reintentos:', e);
                 this.materias = [];
             }
             if(!this.materias.length){
@@ -60,7 +80,13 @@ const inscripciones = {
                     const resp = await fetch(`private/modulos/materias/materia.php?accion=consultar`);
                     const data = await resp.json();
                     this.materias = data || [];
-                    if(this.materias.length) await db.materias.bulkAdd(this.materias);
+                    if(this.materias.length) {
+                        try {
+                            await this._retryWithBackoff(() => db.materias.bulkAdd(this.materias), 2);
+                        } catch (e) {
+                            console.warn('Error guardando materias en BD local:', e);
+                        }
+                    }
                 } catch (e) {
                     console.error('Error cargando materias desde servidor:', e);
                 }
@@ -70,9 +96,9 @@ const inscripciones = {
         async cargarMatriculas(){
             try {
                 await db.waitForReady();
-                this.matriculas = await db.matriculas.filter(() => true).toArray();
+                this.matriculas = await this._retryWithBackoff(() => db.matriculas.filter(() => true).toArray(), 2);
             } catch (e) {
-                console.error('Error leyendo matriculas de la DB local:', e);
+                console.error('Error leyendo matriculas de la DB local después de reintentos:', e);
                 this.matriculas = [];
             }
             if(this.matriculas.length < 1){
@@ -80,7 +106,13 @@ const inscripciones = {
                     const resp = await fetch(`private/modulos/matriculas/matricula.php?accion=consultar`);
                     const data = await resp.json();
                     this.matriculas = data || [];
-                    if(this.matriculas.length) await db.matriculas.bulkAdd(this.matriculas);
+                    if(this.matriculas.length) {
+                        try {
+                            await this._retryWithBackoff(() => db.matriculas.bulkAdd(this.matriculas), 2);
+                        } catch (e) {
+                            console.warn('Error guardando matriculas en BD local:', e);
+                        }
+                    }
                 } catch (e) {
                     console.error('Error cargando matriculas desde servidor:', e);
                 }
@@ -122,7 +154,15 @@ const inscripciones = {
                         // Sincronizar matrícula con servidor.
                         fetch(`private/modulos/matriculas/matricula.php?accion=nuevo&matriculas=${encodeURIComponent(JSON.stringify(nuevaMatricula))}`)
                             .then(resp=>resp.json())
-                            .then(data=>{ if(data!=true) console.warn('No se sincronizó matrícula automáticamente:', data); })
+                            .then(data=>{
+                                if(data.msg === 'ok' || data === true) {
+                                    console.log('Matrícula sincronizada correctamente');
+                                } else if(data.msg && data.msg.includes('Duplicate entry')) {
+                                    console.warn('La matrícula automática ya existe en el servidor');
+                                } else {
+                                    console.warn('No se sincronizó matrícula automáticamente:', data);
+                                }
+                            })
                             .catch(e=>console.warn('Error sincronizando matrícula:', e));
                         this.matriculas.push(nuevaMatricula);
                     } catch (e) {
@@ -147,10 +187,23 @@ const inscripciones = {
                 alertify.error(`Error al guardar inscripcion en la base local: ${e?.message || e}`);
                 return;
             }
+            
+            // Sincronizar con el servidor con manejo de errores mejorado
             fetch(`private/modulos/inscripciones/inscripcion.php?accion=${this.accion}&inscripciones=${encodeURIComponent(JSON.stringify(datos))}`)
                 .then(response=>response.json())
                 .then(data=>{
-                    if(data!=true) alertify.error(`Error al sincronizar con el servidor: ${data}`);
+                    if(data.msg === 'ok' || data === true) {
+                        console.log('Inscripción sincronizada correctamente con el servidor');
+                    } else if(data.msg && data.msg.includes('Duplicate entry')) {
+                        console.warn('La inscripción ya existe en el servidor. Se mantiene la copia local.');
+                        alertify.warning(`La inscripción ya existe en el servidor. Se actualizará automáticamente.`);
+                    } else {
+                        alertify.error(`Error al sincronizar con el servidor: ${data.msg || data}`);
+                    }
+                })
+                .catch(err => {
+                    console.warn('Error de conectividad al sincronizar inscripción:', err);
+                    alertify.warning(`No se pudo sincronizar con el servidor. La inscripción se guardó localmente.`);
                 });
             this.limpiarFormulario();
             this.$emit('buscar');

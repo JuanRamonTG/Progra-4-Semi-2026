@@ -41,6 +41,14 @@ class matriculas{
            return $this->respuesta;
         }
         if($accion==='nuevo'){
+            // Verificar si ya existe una matrícula con este idMatricula
+            $existente = $this->db->consultaSQL('SELECT idMatricula FROM matriculas WHERE idMatricula = ?', $this->datos['idMatricula']);
+            if(!empty($existente)){
+                // Si existe, actualizar en lugar de insertar
+                return $this->db->consultaSQL('UPDATE matriculas SET codigo = ?, fecha = ?, idAlumno = ? WHERE idMatricula = ?',
+                    $this->datos['codigo'], $this->datos['fecha'], $this->datos['idAlumno'], $this->datos['idMatricula']);
+            }
+            // Si no existe, insertar normalmente
             return $this->db->consultaSQL('INSERT INTO matriculas (idMatricula, codigo, fecha, idAlumno) VALUES (?, ?, ?, ?)',
             $this->datos['idMatricula'], $this->datos['codigo'], $this->datos['fecha'], $this->datos['idAlumno']);
         }else if($accion==='modificar'){

@@ -142,3 +142,40 @@ globalThis.sqlite3Worker1Promiser.defaultConfig = {
   }),
   onerror: (...args)=>console.error('worker1 promiser error',...args)
 };
+
+globalThis.sqlite3Worker1Promiser.v2 = function callee(config = callee.defaultConfig){
+  let oldFunc;
+  if( 'function' == typeof config ){
+    oldFunc = config;
+    config = {};
+  }else if('function'===typeof config?.onready){
+    oldFunc = config.onready;
+    delete config.onready;
+  }
+  const promiseProxy = Object.create(null);
+  config = Object.assign((config || Object.create(null)),{
+    onready: async function(func){
+      try {
+        if( oldFunc ) await oldFunc(func);
+        promiseProxy.resolve(func);
+      }
+      catch(e){promiseProxy.reject(e)}
+    }
+  });
+  const p = new Promise(function(resolve,reject){
+    promiseProxy.resolve = resolve;
+    promiseProxy.reject = reject;
+  });
+  try{
+    this.original(config);
+  }catch(e){
+    promiseProxy.reject(e);
+  }
+  return p;
+}.bind({
+   
+  original: sqlite3Worker1Promiser
+});
+
+globalThis.sqlite3Worker1Promiser.v2.defaultConfig =
+  globalThis.sqlite3Worker1Promiser.defaultConfig;

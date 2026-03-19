@@ -9,6 +9,8 @@ async function initApp() {
 
     try {
         await window.db.waitForReady();
+        // Pequeño delay adicional para asegurar que todo esté completamente estable
+        await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (e) {
         console.error('No se pudo inicializar la base de datos local:', e);
     }

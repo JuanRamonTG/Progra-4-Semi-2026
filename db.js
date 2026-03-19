@@ -1,5 +1,3 @@
-import './componentes/sqlite3-worker1-promiser-bundler-friendly.js';
-
 const IPFS_API_URL = 'https://ipfs.infura.io:5001/api/v0';
 const IPFS_CID_STORAGE_KEY = 'sqlite-ipfs-cid';
 
@@ -48,6 +46,36 @@ class SQLiteORM {
         this._readyPromise = this.init();
         this._ipfsSaveTimer = null;
         this._ipfsSaveInProgress = null;
+        this._transactionQueue = [];
+        this._transactionInProgress = false;
+    }
+
+    async _enqueueTransaction(fn) {
+        return new Promise((resolve, reject) => {
+            this._transactionQueue.push({ fn, resolve, reject });
+            this._processTransactionQueue();
+        });
+    }
+
+    async _processTransactionQueue() {
+        if (this._transactionInProgress || this._transactionQueue.length === 0) return;
+
+        this._transactionInProgress = true;
+        const { fn, resolve, reject } = this._transactionQueue.shift();
+
+        try {
+            const result = await fn();
+            resolve(result);
+        } catch (e) {
+            reject(e);
+        } finally {
+            this._transactionInProgress = false;
+            // Procesar el próximo item en la cola
+            if (this._transactionQueue.length > 0) {
+                await new Promise(r => setTimeout(r, 10));
+                this._processTransactionQueue();
+            }
+        }
     }
 
     async init() {
@@ -68,20 +96,18 @@ class SQLiteORM {
                 const coop = res.headers.get('Cross-Origin-Opener-Policy');
                 const coep = res.headers.get('Cross-Origin-Embedder-Policy');
                 if (!coop || !coep) {
-                    console.warn('La respuesta del servidor no incluye los encabezados COOP/COEP necesarios para OPFS.', {coop, coep});
+                    console.warn('La respuesta del servidor no incluye los encabezados COOP/COEP necesarios para OPFS.', { coop, coep });
                 }
             } catch (e) {
                 console.warn('No se pudo verificar encabezados COOP/COEP (no crítico):', e);
             }
 
-            console.log('OPFS preflight:', opfsPreflight);
 
-            // Inicializar Promiser que corre en un Web Worker.
-            // Algunos errores de OPFS pueden ser transitorios, por lo que reintentamos.
+            // Inicializar Promiser usando la versión v1 nativa
             const createPromiser = () => new Promise((resolve, reject) => {
-                const _promiser = self.sqlite3Worker1Promiser({
+                const _promiser = globalThis.sqlite3Worker1Promiser({
                     onready: () => resolve(_promiser),
-                    worker: () => new Worker(new URL('./componentes/sqlite3-worker1-bundler-friendly.mjs', import.meta.url), { type: 'module' }),
+                    worker: () => new Worker('componentes/sqlite3-worker1.js'),
                     onerror: (err) => reject(err)
                 });
             });
@@ -107,25 +133,21 @@ class SQLiteORM {
             // Consultar la configuración del worker para saber qué VFS están disponibles.
             const conf = await this.sqlite3('config-get', {});
             const vfsList = conf?.result?.vfsList || [];
-            console.log('VFS disponibles en el Worker:', vfsList);
 
-            const preferredVfs = ['opfs-sahpool', 'opfs', 'wasmfs', 'memdb', 'kvvfs'];
+            // Solo intentamos usar OPFS (o su variante sahpool). Si no está disponible, fallamos rápido.
+            const preferredVfs = ['opfs-sahpool', 'opfs'];
             const candidates = preferredVfs.filter(v => vfsList.includes(v));
             if (!candidates.length) {
-                throw new Error('No hay VFS soportado disponible en este navegador/entorno: ' + JSON.stringify(vfsList));
+                throw new Error('OPFS no está disponible en este entorno: ' + JSON.stringify(vfsList));
             }
-
-            const isOpfsVfs = (v) => (v === 'opfs' || v === 'opfs-sahpool');
 
             const savedCid = getSavedIpfsCid();
             let ipfsBytes = null;
             if (savedCid) {
                 try {
-                    console.log('Cargando DB desde IPFS CID:', savedCid);
                     ipfsBytes = await ipfsCat(savedCid);
-                    console.log('DB cargada desde IPFS, tamaño', ipfsBytes.length);
-                } catch (e) {
-                    console.warn('No se pudo cargar DB desde IPFS (continuando sin ella):', e);
+                } catch {
+                    // Ignorar: no es crítico.
                 }
             }
 
@@ -135,8 +157,7 @@ class SQLiteORM {
                 }
                 if (!opfsPreflight.crossOriginIsolated) {
                     throw new Error(
-                        'OPFS (async) requiere cross-origin isolation. Configura COOP/COEP en el servidor ' +
-                        '(por ejemplo: COOP=same-origin y COEP=credentialless o require-corp).'
+                        'OPFS (async) requiere cross-origin isolation. Configura COOP/COEP en el servidor.'
                     );
                 }
                 if (!opfsPreflight.hasGetDirectory) {
@@ -148,43 +169,16 @@ class SQLiteORM {
             };
 
             const openWithVfs = async (vfs) => {
-                if (isOpfsVfs(vfs)) {
-                    ensureOpfsPreflight();
-                }
+                ensureOpfsPreflight();
 
-                const filename = (vfs === 'kvvfs')
-                    ? ':localStorage:'
-                    : `file:academica.sqlite3?vfs=${vfs}`;
-
-                console.log('Abriendo base de datos usando VFS:', vfs, 'filename:', filename);
+                const filename = `file:academica.sqlite3?vfs=${vfs}`;
                 const openArgs = { filename };
                 if (ipfsBytes) openArgs.byteArray = ipfsBytes;
 
-                const openRes = await this.sqlite3('open', openArgs);
-                console.log(`Resultado de open (${vfs}):`, openRes);
-                return openRes;
+                return this.sqlite3('open', openArgs);
             };
 
-            let openResult;
-            let lastOpenError = null;
-            let chosenVfs = null;
-            for (const vfs of candidates) {
-                try {
-                    openResult = await openWithVfs(vfs);
-                    chosenVfs = vfs;
-                    console.log('Base de datos abierta con VFS:', vfs);
-                    break;
-                } catch (e) {
-                    console.warn('No se pudo abrir DB con VFS', vfs, e);
-                    lastOpenError = e;
-                }
-            }
-            if (!openResult) {
-                throw lastOpenError || new Error('No se pudo abrir la base de datos con ninguno de los VFS disponibles.');
-            }
-            if (!isOpfsVfs(chosenVfs)) {
-                console.warn('Se abrió la DB usando un VFS distinto a OPFS. OPFS no funcionó correctamente en este entorno.');
-            }
+            const openResult = await openWithVfs(candidates[0]);
 
             // Crear las tablas (si no existen) y avanzar el esquema en caso de versiones anteriores
             await this.sqlite3('exec', {
@@ -265,7 +259,7 @@ class SQLiteORM {
 
         this._ipfsSaveInProgress = (async () => {
             try {
-                const res = await this.sqlite3('export');
+                const res = await this.sqlite3('export', {});
                 const bytes = res?.byteArray;
                 if (!bytes) return null;
                 const cid = await ipfsAdd(bytes);
@@ -289,7 +283,7 @@ class SQLiteORM {
         if (this.localDisabled || !this.sqlite3) return;
         if (this._ipfsSaveTimer) clearTimeout(this._ipfsSaveTimer);
         this._ipfsSaveTimer = setTimeout(() => {
-            this.saveToIpfs().catch(() => {});
+            this.saveToIpfs().catch(() => { });
         }, 600);
     }
 
@@ -370,11 +364,17 @@ class Table {
         const values = Object.values(validItem);
         const placeholders = keys.map(() => '?').join(', ');
         const sql = `INSERT OR REPLACE INTO ${this.tableName} (${keys.join(', ')}) VALUES (${placeholders})`;
-        await this.dbObj.sqlite3('exec', {
-            sql: sql,
-            bind: values
-        });
-        this.dbObj.scheduleSaveToIpfs();
+        
+        try {
+            await this.dbObj.sqlite3('exec', {
+                sql: sql,
+                bind: values
+            });
+            this.dbObj.scheduleSaveToIpfs();
+        } catch (e) {
+            console.error(`Error en put() para tabla ${this.tableName}:`, e);
+            throw e;
+        }
     }
 
     async delete(id) {
@@ -393,31 +393,39 @@ class Table {
         if (!items || !items.length) return;
         await this.getTableInfo();
 
-        await this.dbObj.sqlite3('exec', { sql: 'BEGIN TRANSACTION' });
-        try {
-            for (let item of items) {
-                const validItem = {};
-                for (const [k, v] of Object.entries(item)) {
-                    if (this.columns.has(k)) {
-                        if (v !== null && typeof v === 'object' && !(v instanceof ArrayBuffer) && !(v instanceof Uint8Array)) {
-                            validItem[k] = v.toString() !== '[object Object]' ? v.toString() : JSON.stringify(v);
-                        } else {
-                            validItem[k] = v;
+        // Usar la cola de transacciones para evitar conflictos
+        return this.dbObj._enqueueTransaction(async () => {
+            try {
+                await this.dbObj.sqlite3('exec', { sql: 'BEGIN TRANSACTION' });
+                for (let item of items) {
+                    const validItem = {};
+                    for (const [k, v] of Object.entries(item)) {
+                        if (this.columns.has(k)) {
+                            if (v !== null && typeof v === 'object' && !(v instanceof ArrayBuffer) && !(v instanceof Uint8Array)) {
+                                validItem[k] = v.toString() !== '[object Object]' ? v.toString() : JSON.stringify(v);
+                            } else {
+                                validItem[k] = v;
+                            }
                         }
                     }
+                    const keys = Object.keys(validItem);
+                    const values = Object.values(validItem);
+                    const placeholders = keys.map(() => '?').join(', ');
+                    const sql = `INSERT OR REPLACE INTO ${this.tableName} (${keys.join(', ')}) VALUES (${placeholders})`;
+                    await this.dbObj.sqlite3('exec', { sql, bind: values });
                 }
-                const keys = Object.keys(validItem);
-                const values = Object.values(validItem);
-                const placeholders = keys.map(() => '?').join(', ');
-                const sql = `INSERT OR REPLACE INTO ${this.tableName} (${keys.join(', ')}) VALUES (${placeholders})`;
-                await this.dbObj.sqlite3('exec', { sql, bind: values });
+                await this.dbObj.sqlite3('exec', { sql: 'COMMIT' });
+                this.dbObj.scheduleSaveToIpfs();
+            } catch (e) {
+                try {
+                    await this.dbObj.sqlite3('exec', { sql: 'ROLLBACK' });
+                } catch (rollbackError) {
+                    console.warn('Error en ROLLBACK:', rollbackError);
+                }
+                console.error('Error en bulkAdd:', e);
+                throw e;
             }
-            await this.dbObj.sqlite3('exec', { sql: 'COMMIT' });
-            this.dbObj.scheduleSaveToIpfs();
-        } catch (e) {
-            await this.dbObj.sqlite3('exec', { sql: 'ROLLBACK' });
-            console.error('Rollback en bulkAdd', e);
-        }
+        });
     }
 
     filter(predicate) {
@@ -465,6 +473,6 @@ class Table {
     }
 }
 
-const db = new SQLiteORM();
-window.db = db;
-export default db;
+if (!window.db) {
+    window.db = new SQLiteORM();
+}

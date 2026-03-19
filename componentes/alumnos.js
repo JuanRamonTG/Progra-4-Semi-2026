@@ -54,10 +54,23 @@ const alumnos = {
                 alertify.error(`Error al guardar alumno en la base local: ${e?.message || e}`);
                 return;
             }
+            
+            // Sincronizar con el servidor con manejo de errores mejorado
             fetch(`private/modulos/alumnos/alumno.php?accion=${this.accion}&alumnos=${JSON.stringify(datos)}`)
                 .then(response=>response.json())
                 .then(data=>{
-                    if(data!=true) alertify.error(`Error al sincronizar con el servidor: ${data}`);
+                    if(data.msg === 'ok' || data === true) {
+                        console.log('Alumno sincronizado correctamente con el servidor');
+                    } else if(data.msg && data.msg.includes('Duplicate entry')) {
+                        console.warn('El alumno ya existe en el servidor. Se mantiene la copia local.');
+                        alertify.warning(`El alumno ya existe en el servidor. Se actualizará automáticamente.`);
+                    } else {
+                        alertify.error(`Error al sincronizar con el servidor: ${data.msg || data}`);
+                    }
+                })
+                .catch(err => {
+                    console.warn('Error de conectividad al sincronizar alumno:', err);
+                    alertify.warning(`No se pudo sincronizar con el servidor. El alumno se guardó localmente.`);
                 });
             this.limpiarFormulario();
             alertify.success(`${datos.nombre} guardado correctamente`);

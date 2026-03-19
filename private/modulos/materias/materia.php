@@ -41,6 +41,14 @@ class materias{
            return $this->respuesta;
         }
         if($accion==='nuevo'){
+            // Verificar si ya existe una materia con este idMateria
+            $existente = $this->db->consultaSQL('SELECT idMateria FROM materias WHERE idMateria = ?', $this->datos['idMateria']);
+            if(!empty($existente)){
+                // Si existe, actualizar en lugar de insertar
+                return $this->db->consultaSQL('UPDATE materias SET codigo = ?, nombre = ?, uv = ? WHERE idMateria = ?',
+                    $this->datos['codigo'], $this->datos['nombre'], $this->datos['uv'], $this->datos['idMateria']);
+            }
+            // Si no existe, insertar normalmente
             return $this->db->consultaSQL('INSERT INTO materias (idMateria, codigo, nombre, uv) VALUES (?, ?, ?, ?)',
             $this->datos['idMateria'], $this->datos['codigo'], $this->datos['nombre'], $this->datos['uv']);
         }else if($accion==='modificar'){
