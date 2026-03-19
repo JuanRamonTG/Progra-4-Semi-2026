@@ -1,5 +1,5 @@
 // Gestión de base de datos local usando SQLite WASM con almacenamiento OPFS
-const RUTA_BD = 'file:academica.sqlite3?vfs=opfs';
+const RUTA_BD = 'file:db_academica.sqlite3?vfs=opfs';
 
 // Definición de columnas por tabla (en orden exacto del schema)
 const ESQUEMA_TABLAS = {
@@ -112,8 +112,6 @@ class GestorBD {
 
 // Crea las tablas del sistema si no existen
 async function crearEsquema(bd) {
-    await bd.ejecutar(`PRAGMA journal_mode = WAL`);
-    await bd.ejecutar(`PRAGMA foreign_keys = ON`);
 
     await bd.ejecutar(`
         CREATE TABLE IF NOT EXISTS alumnos (
