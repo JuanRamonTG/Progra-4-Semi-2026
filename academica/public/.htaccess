@@ -1,3 +1,8 @@
+<IfModule mod_headers.c>
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Cross-Origin-Embedder-Policy "require-corp"
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
