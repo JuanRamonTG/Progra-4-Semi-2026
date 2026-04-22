@@ -6,6 +6,8 @@ use App\Http\Controllers\MateriaController;
 use App\Http\Controllers\DocenteController;
 use App\Http\Controllers\MatriculaController;
 use App\Http\Controllers\InscripcionController;
+use App\Http\Controllers\RegistroMaterialController;
+use App\Http\Controllers\RegistroFallecidoController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -26,4 +28,15 @@ Route::prefix('private/modulos')->group(function () {
     Route::any('docentes/docente.php', [DocenteController::class, 'index']);
     Route::any('matriculas/matricula.php', [MatriculaController::class, 'index']);
     Route::any('inscripciones/inscripcion.php', [InscripcionController::class, 'index']);
+    Route::any('registromaterial/registromaterial.php', [RegistroMaterialController::class, 'index']);
+    Route::any('registrofallecido/registrofallecido.php', [RegistroFallecidoController::class, 'index']);
+});
+
+// Rutas REST para los nuevos módulos
+Route::get('/registromaterial', function () {
+    return view('registromaterial');
+});
+
+Route::get('/registrofallecido', function () {
+    return view('registrofallecido');
 });

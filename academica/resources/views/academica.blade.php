@@ -20,7 +20,7 @@
     <div id="app">
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4">
             <div class="container-fluid">
-                <a class="navbar-brand" href="#">::.. SISTEMA ACADÉMICO (LARAVEL) ..::</a>
+                <a class="navbar-brand" href="/">::.. SISTEMA ACADÉMICO (LARAVEL) ..::</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -31,6 +31,9 @@
                         <a class="nav-link" href="#" @click="abrirVentana('docentes')">Docentes</a>
                         <a class="nav-link" href="#" @click="abrirVentana('matriculas')">Matriculas</a>
                         <a class="nav-link" href="#" @click="abrirVentana('inscripciones')">Inscripciones</a>
+                        <div class="nav-divider"></div>
+                        <a class="nav-link" href="/registromaterial">📦 Registro Material</a>
+                        <a class="nav-link" href="/registrofallecido">💔 Registro Fallecido</a>
                     </div>
                 </div>
             </div>
