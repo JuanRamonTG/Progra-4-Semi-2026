@@ -176,18 +176,6 @@
             </div>
             
             <div class="modules-grid">
-                <!-- Sistema Académico -->
-                <div class="module-card info">
-                    <div class="module-header">
-                        <span class="module-icon"><i class="fas fa-graduation-cap"></i></span>
-                        <h5 class="module-title">Sistema Académico</h5>
-                    </div>
-                    <div class="module-body">
-                        <p class="module-description">Gestión de alumnos, docentes, materias, matrículas e inscripciones.</p>
-                        <a href="/sistema" class="module-link"><i class="fas fa-arrow-right"></i> Acceder</a>
-                    </div>
-                </div>
-                
                 <!-- Registro de Material -->
                 <div class="module-card primary">
                     <div class="module-header">

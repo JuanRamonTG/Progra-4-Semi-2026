@@ -32,8 +32,8 @@
                         <a class="nav-link" href="#" @click="abrirVentana('matriculas')">Matriculas</a>
                         <a class="nav-link" href="#" @click="abrirVentana('inscripciones')">Inscripciones</a>
                         <div class="nav-divider"></div>
-                        <a class="nav-link" href="/registromaterial">📦 Registro Material</a>
-                        <a class="nav-link" href="/registrofallecido">💔 Registro Fallecido</a>
+                        <a class="nav-link" href="/registromaterial"> Registro Material</a>
+                        <a class="nav-link" href="/registrofallecido"> Registro Fallecido</a>
                     </div>
                 </div>
             </div>
