@@ -64,7 +64,7 @@
 
             <div id="appSistema">
                 <!-- Componente de búsqueda -->
-                <busqueda_registrofallecido :forms="forms" ref="busqueda_registrofallecido"></busqueda_registrofallecido>
+                <busqueda_registrofallecido @resultados="actualizarResultados" :forms="forms" ref="busqueda_registrofallecido"></busqueda_registrofallecido>
                 
                 <!-- Componente principal -->
                 <registrofallecido @buscar='cargarRegistros()' :forms="forms" ref="registrofallecido"></registrofallecido>
@@ -113,6 +113,9 @@
                     } catch(err) {
                         console.error('Error al cargar:', err);
                     }
+                },
+                actualizarResultados(datos) {
+                    this.$refs.registrofallecido.data_registrofallecidos = datos;
                 }
             },
             mounted() {

@@ -64,7 +64,7 @@
 
             <div id="appSistema">
                 <!-- Componente de búsqueda -->
-                <busqueda_registromaterial :forms="forms" ref="busqueda_registromaterial"></busqueda_registromaterial>
+                <busqueda_registromaterial @resultados="actualizarResultados" :forms="forms" ref="busqueda_registromaterial"></busqueda_registromaterial>
                 
                 <!-- Componente principal -->
                 <registromaterial @buscar='cargarRegistros()' :forms="forms" ref="registromaterial"></registromaterial>
@@ -113,6 +113,9 @@
                     } catch(err) {
                         console.error('Error al cargar:', err);
                     }
+                },
+                actualizarResultados(datos) {
+                    this.$refs.registromaterial.data_registromateriales = datos;
                 }
             },
             mounted() {

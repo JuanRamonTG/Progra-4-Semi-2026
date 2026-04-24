@@ -23,7 +23,9 @@ const registromaterial = {
         modificarRegistroMaterial(material){
             this.accion = 'modificar';
             this.id = material.id;
-            this.registromaterial.fecha_hora = material.fecha_hora;
+            // Convertir formato de fecha de BD (YYYY-MM-DD HH:mm:ss) a datetime-local (YYYY-MM-DDTHH:mm)
+            let fecha = material.fecha_hora ? material.fecha_hora.replace(' ', 'T').substring(0, 16) : '';
+            this.registromaterial.fecha_hora = fecha;
             this.registromaterial.ubicacion = material.ubicacion;
             this.registromaterial.descripcion = material.descripcion;
             this.registromaterial.verificacion = material.verificacion;
@@ -145,7 +147,7 @@ const registromaterial = {
                                 <button type="reset" class="btn btn-warning btn-lg">
                                     <i class="fas fa-times"></i> LIMPIAR
                                 </button>
-                                <button type="button" @click="buscarRegistroMaterial" class="btn btn-info btn-lg">
+                                <button type="button" @click="buscarRegistroMaterial()" class="btn btn-info btn-lg">
                                     <i class="fas fa-search"></i> BUSCAR
                                 </button>
                             </div>

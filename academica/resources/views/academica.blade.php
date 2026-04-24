@@ -68,18 +68,7 @@
     <script src="{{ asset('componentes/sqlite3-worker1-promiser.js') }}"></script>
     <script src="{{ asset('db.js') }}"></script>
     
-    <!-- Componentes -->
-    <script src="{{ asset('componentes/alumnos.js') }}"></script>
-    <script src="{{ asset('componentes/busqueda_alumnos.js') }}"></script>
-    <script src="{{ asset('componentes/materias.js') }}"></script>
-    <script src="{{ asset('componentes/busqueda_materias.js') }}"></script>
-    <script src="{{ asset('componentes/docentes.js') }}"></script>
-    <script src="{{ asset('componentes/busqueda_docentes.js') }}"></script>
-    <script src="{{ asset('componentes/matriculas.js') }}"></script>
-    <script src="{{ asset('componentes/busqueda_matriculas.js') }}"></script>
-    <script src="{{ asset('componentes/inscripciones.js') }}"></script>
-    <script src="{{ asset('componentes/busqueda_inscripciones.js') }}"></script>
-    
+ 
     <script src="{{ asset('main.js') }}"></script>
 </body>
 </html>

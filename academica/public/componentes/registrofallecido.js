@@ -26,13 +26,16 @@ const registrofallecido = {
         modificarRegistroFallecido(registro){
             this.accion = 'modificar';
             this.id = registro.id;
-            this.registrofallecido.fecha_hora = registro.fecha_hora;
+            // Convertir formato de fecha de BD (YYYY-MM-DD HH:mm:ss) a datetime-local (YYYY-MM-DDTHH:mm)
+            let fecha = registro.fecha_hora ? registro.fecha_hora.replace(' ', 'T').substring(0, 16) : '';
+            let horaFallecimiento = registro.hora_fallecimiento ? registro.hora_fallecimiento.replace(' ', 'T').substring(0, 16) : '';
+            this.registrofallecido.fecha_hora = fecha;
             this.registrofallecido.ubicacion = registro.ubicacion;
             this.registrofallecido.descripcion = registro.descripcion;
             this.registrofallecido.verificacion = registro.verificacion;
             this.registrofallecido.fotos = registro.fotos;
             this.registrofallecido.testigos = registro.testigos;
-            this.registrofallecido.hora_fallecimiento = registro.hora_fallecimiento;
+            this.registrofallecido.hora_fallecimiento = horaFallecimiento;
             this.registrofallecido.estado = registro.estado;
         },
         async guardarRegistroFallecido() {
@@ -179,7 +182,7 @@ const registrofallecido = {
                                 <button type="reset" class="btn btn-warning btn-lg">
                                     <i class="fas fa-times"></i> LIMPIAR
                                 </button>
-                                <button type="button" @click="buscarRegistroFallecido" class="btn btn-info btn-lg">
+                                <button type="button" @click="buscarRegistroFallecido()" class="btn btn-info btn-lg">
                                     <i class="fas fa-search"></i> BUSCAR
                                 </button>
                             </div>

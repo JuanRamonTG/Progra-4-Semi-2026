@@ -9,8 +9,12 @@ const busqueda_registrofallecido = {
                 fecha_hasta: '',
                 estado: '',
                 verificacion: ''
-            },
-            mostrar: false
+            }
+        }
+    },
+    computed: {
+        mostrar() {
+            return this.forms.busqueda_registrofallecido.mostrar;
         }
     },
     methods:{
@@ -43,7 +47,8 @@ const busqueda_registrofallecido = {
                     headers: { 'Content-Type': 'application/json' }
                 });
                 let data = await response.json();
-                this.$parent.registrofallecido.data_registrofallecidos = data;
+                // Emitir evento con los datos encontrados
+                this.$emit('resultados', data);
                 
                 if(data.length === 0) {
                     alertify.warning('No se encontraron registros');

@@ -8,8 +8,12 @@ const busqueda_registromaterial = {
                 fecha_desde: '',
                 fecha_hasta: '',
                 verificacion: ''
-            },
-            mostrar: false
+            }
+        }
+    },
+    computed: {
+        mostrar() {
+            return this.forms.busqueda_registromaterial.mostrar;
         }
     },
     methods:{
@@ -39,7 +43,8 @@ const busqueda_registromaterial = {
                     headers: { 'Content-Type': 'application/json' }
                 });
                 let data = await response.json();
-                this.$parent.registromaterial.data_registromateriales = data;
+                // Emitir evento con los datos encontrados
+                this.$emit('resultados', data);
                 
                 if(data.length === 0) {
                     alertify.warning('No se encontraron registros');
