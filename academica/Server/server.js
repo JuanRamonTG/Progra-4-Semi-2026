@@ -5,6 +5,11 @@ io.on('connect', (socket) => {
     console.log('Un usuario se ha conectado');
 });
 
+io.on('disconnect', (socket) => {
+    console.log('Un usuario se ha desconectado');
+});
+
+
 http.listen(3000, () => {
     console.log('Escuchando en el puerto 3000');
 });
