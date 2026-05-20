@@ -1,27 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hola Mundo, usando socket.io</title>
 </head>
-
 <body>
     <h1>Hola Mundo, usando socket.io</h1>
     <div id="estado">Conectando...</div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js"
-        integrity="sha512-8BHxHDLsOHx+flIrQ0DrZcea7MkHqRU5GbTHmbdzMRnAaoCIkZ97PqZcXJkKZckMMhqfoeaJE+DNUVuyoQsO3Q=="
+    <form>
+        <ul id="ulMensajes"></ul>
+        <input type="text" id="txtMensaje" placeholder="Escribe tu mensaje...">
+        <button type="button" 
+            onclick="enviarMensaje()">
+            Enviar mensaje
+        </button>
+    </form>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js" 
+        integrity="sha512-8BHxHDLsOHx+flIrQ0DrZcea7MkHqRU5GbTHmbdzMRnAaoCIkZ97PqZcXJkKZckMMhqfoeaJE+DNUVuyoQsO3Q==" 
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
-        const socket = io.connect('http://localhost:3000', { 'forceNew': true, 'transports': ['websocket', 'polling'] });
+        window.permisoNotificaciones = false;
+        document.addEventListener('DOMContentLoaded', event => {
+            solicitarPermisoNotificaciones();
+
+            document.getElementById('txtMensaje').addEventListener('keyup', (event) => {
+                event.preventDefault();
+
+                if (event.key === 'Enter') {
+                    enviarMensaje();
+                }
+            });
+        });
+        function agregarMensaje(data){
+            const ul = document.getElementById('ulMensajes'),
+                li = document.createElement('li');
+            li.innerText = data.titulo + ': ' + data.mensaje;
+            ul.appendChild(li);
+        }
+        function enviarMensaje(){
+            let data = {
+                titulo: 'Juan Ramon',
+                mensaje: txtMensaje.value
+            };
+            socket.emit('mensajeRecibido',data);
+            txtMensaje.value = '';
+            //agregarMensaje(data);
+        }
+        const socket = io.connect('http://localhost:3000',{'forceNew':true, 'transports':['websocket','polling']});
         socket.on('connect', () => {
             document.getElementById('estado').innerText = 'Conectado';
         });
         socket.on('disconnect', () => {
             document.getElementById('estado').innerText = 'Desconectado';
         });
+        socket.on('mensajeEnviar', (data) => {
+            crearNotificacionLocal(data.titulo, data.mensaje);
+            agregarMensaje(data);
+        });
+
+        function solicitarPermisoNotificaciones(){
+           if(Notification.permission === 'granted'){
+               window.permisoNotificaciones = true;
+               console.log('Permiso concedido');
+           }else{
+               Notification.requestPermission().then( permission => {
+                   if(permission === 'granted'){
+                       window.permisoNotificaciones = true;
+                       console.log('Permiso concedido: ', permission);
+                   }else{
+                       window.permisoNotificaciones = false;
+                       console.log('Permiso denegado: ', permission);
+                   }
+               });
+           }
+        }
+        function crearNotificacionLocal(titulo='', mensaje=''){
+            if(!window.permisoNotificaciones){
+                console.log('Permiso de notificaciones denegado, o no concedido.');
+                return;
+            }
+            let notificacion = new Notification(titulo, {
+                body: mensaje,
+                icon: 'https://github.com/JuanRamonTG.png'
+            });
+            notificacion.onclick = () => {
+                window.open('https://github.com/luishernandezpw/PrograIV-Semi-2026', '_blank');
+                notificacion.close();
+            };
+            setTimeout( () => {
+                notificacion.close();
+            }, 5000);
+        }
     </script>
 </body>
-
 </html>
