@@ -173,8 +173,8 @@
 
 <script setup>
 
-import { onMounted, onUnmounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 
 const router = useRouter();

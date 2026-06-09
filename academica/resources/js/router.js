@@ -75,7 +75,9 @@ const routes = [
     { path: '/reportes', name: 'reportes', component: Reportes },
     { path: '/historial', name: 'historial', component: Historial },
     { path: '/configuracion', name: 'configuracion', component: BuscarCasos }, // Reutilizando para evitar crear más
-    { path: '/ayuda', name: 'ayuda', component: BuscarCasos }
+    { path: '/ayuda', name: 'ayuda', component: BuscarCasos },
+    { path: '/login', name: 'vue-login', component: { template: '<div></div>' } },
+    { path: '/register', name: 'vue-register', component: { template: '<div></div>' } }
 ];
 
 const router = createRouter({

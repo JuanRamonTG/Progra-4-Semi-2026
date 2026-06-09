@@ -7,6 +7,18 @@ Route::get('/', function () {
     return view('landing');
 })->name('home');
 
+Route::get('/cobertura', function () {
+    return view('cobertura');
+})->name('cobertura');
+
+Route::get('/emergencias', function () {
+    return view('emergencias');
+})->name('emergencias');
+
+Route::get('/acerca-de', function () {
+    return view('acerca-de');
+})->name('acerca-de');
+
 Route::get('/visitante/mapa', function () {
     return view('visitor-map');
 })->name('visitor.map');

@@ -143,6 +143,7 @@
 import { reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { useIncidenteStore } from '../composables/useIncidenteStore.js';
 
 const { state: incidenteState } = useIncidenteStore();
 const router = useRouter();

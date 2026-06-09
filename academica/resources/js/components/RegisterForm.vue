@@ -197,6 +197,7 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
+import axios from 'axios';
 
 const form = reactive({
   name: '',

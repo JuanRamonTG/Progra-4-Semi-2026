@@ -48,10 +48,10 @@
             </div>
             
             <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
-                <a href="#" class="hover:text-white transition-colors duration-200">Inicio</a>
-                <a href="#" class="hover:text-white transition-colors duration-200">Cobertura</a>
-                <a href="#" class="hover:text-white transition-colors duration-200">Emergencias</a>
-                <a href="#" class="hover:text-white transition-colors duration-200">Acerca de</a>
+                <a href="{{ route('home') }}" class="hover:text-white transition-colors duration-200">Inicio</a>
+                <a href="{{ route('cobertura') }}" class="hover:text-white transition-colors duration-200">Cobertura</a>
+                <a href="{{ route('emergencias') }}" class="hover:text-white transition-colors duration-200">Emergencias</a>
+                <a href="{{ route('acerca-de') }}" class="hover:text-white transition-colors duration-200">Acerca de</a>
             </nav>
             
             <a href="{{ route('login') }}" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium py-2 px-6 rounded-full transition-all duration-300 shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_25px_rgba(59,130,246,0.6)] hover:-translate-y-0.5">
@@ -237,10 +237,10 @@
                 <div class="col-span-1 md:pl-12">
                     <h4 class="text-white font-semibold mb-6">Enlaces</h4>
                     <ul class="space-y-3">
-                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">Instituciones</a></li>
-                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">Cobertura</a></li>
-                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">Emergencias</a></li>
-                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">Acerca de</a></li>
+                        <li><a href="{{ route('home') }}" class="text-sm text-gray-400 hover:text-white transition-colors">Inicio</a></li>
+                        <li><a href="{{ route('cobertura') }}" class="text-sm text-gray-400 hover:text-white transition-colors">Cobertura</a></li>
+                        <li><a href="{{ route('emergencias') }}" class="text-sm text-gray-400 hover:text-white transition-colors">Emergencias</a></li>
+                        <li><a href="{{ route('acerca-de') }}" class="text-sm text-gray-400 hover:text-white transition-colors">Acerca de</a></li>
                     </ul>
                 </div>
                 
