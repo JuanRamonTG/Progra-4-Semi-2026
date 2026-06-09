@@ -1,0 +1,44 @@
+# IDEs and Editors
+.idea/
+.vscode/
+.cursor/
+.fleet/
+.zed/
+.phpactor.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS Files
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Thumbs.db
+Icon?
+
+# Laravel specific (ignored from root since Laravel is in /academica)
+academica/.env
+academica/.env.*
+!academica/.env.example
+academica/vendor/
+academica/node_modules/
+academica/public/build/
+academica/public/hot/
+academica/public/storage
+academica/storage/*.key
+academica/storage/pail/
+academica/bootstrap/cache/packages.php
+academica/bootstrap/cache/services.php
+
+# PHPUnit cache
+academica/.phpunit.result.cache
+academica/.phpunit.cache/
+
+# NPM / Package managers
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+academica/.pnpm-store/

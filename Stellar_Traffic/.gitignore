@@ -1,0 +1,40 @@
+/node_modules
+/vendor
+
+# Laravel Environment
+.env
+.env.backup
+.env.production
+.env.local
+.env.development
+.env.test
+
+# Laravel Storage & Cache
+/bootstrap/cache/packages.php
+/bootstrap/cache/services.php
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+
+# IDEs & OS Files
+.DS_Store
+Thumbs.db
+/.idea
+/.vscode
+/.cursor
+/.fleet
+/.zed
+/.phpactor.json
+/.phpunit.result.cache
+/.phpunit.cache
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+
+# Package manager stores
+.pnpm-store/
+pnpm-debug.log
+npm-debug.log*
+yarn-error.log*

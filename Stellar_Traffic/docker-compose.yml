@@ -1,0 +1,38 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: stellar-traffic-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    volumes:
+      - ./:/var/www
+    networks:
+      - stellar-network
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stellar_traffic_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - stellar-db-data:/var/lib/postgresql/data
+    networks:
+      - stellar-network
+
+networks:
+  stellar-network:
+    driver: bridge
+
+volumes:
+  stellar-db-data:
